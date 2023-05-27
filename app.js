@@ -195,7 +195,10 @@ WHERE username = '${username}';`;
   console.log(userId);
   const getTweetsQuery = `
   SELECT 
-    *
+    tweet.tweet,
+    COUNT(like.user_id) AS likes,
+    COUNT(reply.user_id) AS replies,
+    tweet.date_time AS dateTime
   FROM follower
   INNER JOIN tweet ON follower.follower_user_id = tweet.user_id
   INNER JOIN reply ON tweet.tweet_id = reply.tweet_id
