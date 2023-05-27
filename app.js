@@ -157,3 +157,58 @@ app.get("/user/following/", authenticationToken, async (request, response) => {
 });
 
 //API 5 Returns the list of all names of people who follows the user
+app.get("/user/followers/", authenticationToken, async (request, response) => {
+  const { username } = request;
+  const getUserIDQuery = `
+  SELECT 
+    user_id
+  FROM 
+    user
+WHERE username = '${username}';`;
+  const userId = await db.get(getUserIDQuery);
+  console.log(userId);
+  const getNamesOfUserFollowers = `
+  SELECT 
+    user.name
+  FROM 
+    user
+  INNER JOIN 
+    follower
+  ON user.user_id = follower.follower_user_id
+  WHERE follower.following_user_id = '${userId.user_id}';`;
+  const followers = await db.all(getNamesOfUserFollowers);
+  response.send(followers);
+});
+
+// API 6 If the user requests a tweet of the user he is following, return the tweet, likes count, replies count and date-time
+app.get("/tweets/:tweetId/", authenticationToken, async (request, response) => {
+  const { username } = request;
+  const { tweetId } = request.params;
+  console.log(tweetId);
+  const getUserIDQuery = `
+  SELECT 
+    user_id
+  FROM 
+    user
+WHERE username = '${username}';`;
+  const userId = await db.get(getUserIDQuery);
+  console.log(userId);
+  const getTweetsQuery = `
+  SELECT 
+    *
+  FROM follower
+  INNER JOIN tweet ON follower.follower_user_id = tweet.user_id
+  INNER JOIN reply ON tweet.tweet_id = reply.tweet_id
+  INNER JOIN like ON reply.tweet_id = like.tweet_id
+  WHERE tweet.tweet_id = '${tweetId}'
+  AND follower.following_user_id = '${userId.user_id}';`;
+
+  const tweets = await db.all(getTweetsQuery);
+  console.log(tweets);
+  if (tweets === undefined) {
+    response.status(401);
+    response.send("Invalid Request");
+  } else {
+    response.send(tweets);
+  }
+});
