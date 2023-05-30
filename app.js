@@ -240,17 +240,16 @@ app.get(
       const getTweetsQuery = `
         SELECT
         user.name
-        FROM follower
-        INNER JOIN tweet ON follower.follower_user_id = tweet.user_id
-        INNER JOIN like ON tweet.tweet_id = like.tweet_id
-        INNER JOIN user ON like.user_id = user.user_id
-        WHERE follower.following_user_id = '${userId.user_id}'
-        AND tweet.tweet_id = '${tweetId}'
+        FROM user
+        INNER JOIN like ON user.user_id = like.user_id
+        WHERE like.tweet_id = '${tweetId}'
         ;`;
-      let likes = await db.all(getTweetsQuery);
-      likes = likes.map((item) => Object.values(item));
+      const likesResult = await db.all(getTweetsQuery);
+      const likes = likesResult.map((item) => {
+        return user.name
+      });
       console.log(likes);
-      response.send(`"likes": '${JSON.stringify(likes)}'`);
+      response.send({likes});
     } else {
       response.status(401);
       response.send("Invalid Request");
@@ -273,15 +272,13 @@ app.get(
     SELECT 
         user.name,
         reply.reply
-    FROM follower
-    INNER JOIN tweet ON follower.follower_user_id = tweet.user_id
-    INNER JOIN reply ON tweet.tweet_id = reply.tweet_id
-    INNER JOIN user ON reply.user_id = user.user_id
-    WHERE follower.following_user_id = '${userId.user_id}'
-    AND tweet.tweet_id = '${tweetId}'
+    FROM user
+    INNER JOIN reply ON user.user_id = reply.user_id
+    INNER JOIN tweet ON reply.tweet_id = tweet.tweet_id
+    WHERE tweet.tweet_id = '${tweetId}'
     ;`;
       const replies = await db.all(getTweetsQuery);
-      response.send(replies);
+      response.send({replies});
     } else {
       response.status(401);
       response.send("Invalid Request");
